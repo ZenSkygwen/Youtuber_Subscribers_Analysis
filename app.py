@@ -22,9 +22,11 @@ Selain metrik numerik, terdapat pula data kategori berupa frekuensi upload, kual
 Dashboard ini dirancang untuk mengeksplorasi data awal secara mentah, serta melatih model machine learning guna memprediksi jumlah *subscribers* secara akurat.
 """)
 
+@st.cache_data
 def load_raw_data():
     return pd.read_csv("youtube_channel_subscribers.csv")
 
+@st.cache_data
 def load_and_preprocess_data():
     df = pd.read_csv("youtube_channel_subscribers.csv")
 
@@ -101,6 +103,7 @@ def load_and_preprocess_data():
 
     return df_impute
 
+@st.cache_data
 def train_and_evaluate_models(X_train, X_test, Y_train, Y_test):
     results = {}
     predictions = {}
@@ -258,20 +261,23 @@ def main():
         dan lihat seberapa besar estimasi jumlah *Subscribers* yang bisa Anda dapatkan berdasarkan kecerdasan model terbaik.
         """)
 
-        # Buat form input interaktif untuk beberapa fitur numerik utama
-        col_sim1, col_sim2 = st.columns(2)
-        with col_sim1:
-            input_views = st.number_input("Monthly Views (Penayangan Bulanan)", min_value=0, max_value=50000000, value=5000000, step=10000)
-            input_videos = st.number_input("Total Videos (Jumlah Video)", min_value=1, max_value=10000, value=300, step=10)
-            input_team = st.slider("Team Members (Jumlah Anggota Tim)", min_value=1, max_value=50, value=5, step=1)
-            
-        with col_sim2:
-            input_spend = st.number_input("Avg Spend Per Video (USD)", min_value=0.0, max_value=50000.0, value=1500.0, step=50.0)
-            input_length = st.slider("Avg Video Length (Menit)", min_value=1.0, max_value=180.0, value=12.0, step=0.5)
-            input_trending = st.checkbox("Has Trending Video (Memiliki Video Trending)", value=False)
+        # Form mencegah seluruh aplikasi dijalankan ulang saat input sedang diubah.
+        with st.form("prediction_simulation"):
+            col_sim1, col_sim2 = st.columns(2)
+            with col_sim1:
+                input_views = st.number_input("Monthly Views (Penayangan Bulanan)", min_value=0, max_value=50000000, value=5000000, step=10000)
+                input_videos = st.number_input("Total Videos (Jumlah Video)", min_value=1, max_value=10000, value=300, step=10)
+                input_team = st.slider("Team Members (Jumlah Anggota Tim)", min_value=1, max_value=50, value=5, step=1)
+                
+            with col_sim2:
+                input_spend = st.number_input("Avg Spend Per Video (USD)", min_value=0.0, max_value=50000.0, value=1500.0, step=50.0)
+                input_length = st.slider("Avg Video Length (Menit)", min_value=1.0, max_value=180.0, value=12.0, step=0.5)
+                input_trending = st.checkbox("Has Trending Video (Memiliki Video Trending)", value=False)
 
-        # Tombol Eksekusi Simulasi
-        if st.button("Hitung Estimasi Subscribers"):
+            # Tombol ini mengirim semua input sekaligus dan menjalankan prediksi.
+            calculate_prediction = st.form_submit_button("Hitung Estimasi Subscribers")
+
+        if calculate_prediction:
             # Mengambil model terbaik dari hasil evaluasi
             best_model = trained_models[best_model_name]
             
